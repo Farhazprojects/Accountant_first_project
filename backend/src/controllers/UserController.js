@@ -1,8 +1,90 @@
 
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const EmailService = require('../services/EmailService');
 
 const UserController = {
+  async inviteUser(req, res, next) {
+    try {
+      const { firstName, lastName, email, role = 'staff' } = req.body;
+
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ error: 'firstName, lastName, and email are required.' });
+      }
+
+      if (!['admin', 'staff'].includes(role)) {
+        return res.status(400).json({ error: 'role must be admin or staff.' });
+      }
+
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(409).json({ error: 'User with this email already exists.' });
+      }
+
+      const tempPassword = crypto.randomBytes(12).toString('base64url');
+      const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+      const invitedUser = await User.create({
+        firstName,
+        lastName,
+        email,
+        passwordHash,
+        role,
+        isActive: false,
+      });
+
+      const inviteToken = jwt.sign(
+        {
+          type: 'staff_invite',
+          userId: invitedUser.id,
+          email: invitedUser.email,
+          role: invitedUser.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      const appUrl = process.env.REACT_APP_URL || 'http://localhost:3000';
+      const inviteUrl = `${appUrl}/accept-invite?token=${inviteToken}`;
+      await EmailService.sendEmail({
+        to: email,
+        subject: 'You have been invited to Accountant First',
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2>Hello ${firstName},</h2>
+            <p>You have been invited as <strong>${role}</strong> to Accountant First.</p>
+            <p>Use the temporary password below to sign in after accepting the invitation.</p>
+            <p><strong>Temporary password:</strong> ${tempPassword}</p>
+            <p>
+              <a href="${inviteUrl}" style="background:#0f172a;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">
+                Accept Invitation
+              </a>
+            </p>
+          </div>
+        `,
+      });
+
+      return res.status(201).json({
+        data: {
+          message: 'Staff invitation sent successfully.',
+          user: {
+            id: invitedUser.id,
+            firstName: invitedUser.firstName,
+            lastName: invitedUser.lastName,
+            email: invitedUser.email,
+            role: invitedUser.role,
+            isActive: invitedUser.isActive,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('[UserController.inviteUser Error]:', error.message);
+      next(error);
+    }
+  },
+
   async createUser(req, res, next) {
     try {
       const { firstName, lastName, email, password, role } = req.body;

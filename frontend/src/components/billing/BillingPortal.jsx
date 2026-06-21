@@ -5,6 +5,7 @@ import FadeIn from '../ui/FadeIn';
 export const BillingPortal = () => {
   const [billingInfo, setBillingInfo] = useState({ status: 'loading', plan: 'None' });
   const [isProcessing, setIsProcessing] = useState(false);
+  const growthPriceId = process.env.REACT_APP_STRIPE_PRICE_GROWTH || 'price_GROWTH_123';
 
   useEffect(() => {
     const fetchBillingStatus = async () => {
@@ -12,7 +13,11 @@ export const BillingPortal = () => {
         const response = await axiosClient.get('/billing/status');
         setBillingInfo(response.data.data);
       } catch (err) {
-        setBillingInfo({ status: 'error', plan: 'Unidentified' });
+        setBillingInfo({
+          status: 'error',
+          plan: 'Unidentified',
+          errorMessage: err.response?.data?.error || 'Failed to fetch billing status.',
+        });
       }
     };
     fetchBillingStatus();
@@ -25,7 +30,7 @@ export const BillingPortal = () => {
       // Redirect out directly to Stripe's ultra-secure hosted checkout flow
       window.location.href = response.data.data.checkoutUrl;
     } catch (err) {
-      alert('Could not launch subscription flow. Try again.');
+      alert(err.response?.data?.error || 'Could not launch subscription flow. Try again.');
       setIsProcessing(false);
     }
   };
@@ -36,7 +41,7 @@ export const BillingPortal = () => {
       const response = await axiosClient.post('/billing/portal');
       window.location.href = response.data.data.portalUrl;
     } catch (err) {
-      alert('Could not open self-service portal.');
+      alert(err.response?.data?.error || 'Could not open self-service portal.');
       setIsProcessing(false);
     }
   };
@@ -63,6 +68,9 @@ export const BillingPortal = () => {
               {billingInfo.status.toUpperCase()}
             </span>
           </p>
+          {billingInfo.errorMessage && (
+            <p className="af-muted" style={{ marginTop: '8px' }}>{billingInfo.errorMessage}</p>
+          )}
         </div>
 
         {billingInfo.status === 'active' && (
@@ -87,7 +95,7 @@ export const BillingPortal = () => {
               className="af-btn af-btn-primary" 
               style={{ width: '100%' }} 
               disabled={isProcessing}
-              onClick={() => handleSubscribe('price_GROWTH_123')}
+              onClick={() => handleSubscribe(growthPriceId)}
             >
               Subscribe Now
             </button>

@@ -14,6 +14,8 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import UserManagement from './components/admin/UserManagement';
 import ProposalViewer from './components/proposals/ProposalViewer';
 import BillingPortal from './components/billing/BillingPortal';
+import WorkflowPage from './components/workflows/WorkflowPage';
+import TaskDetailPage from './components/tasks/TaskDetailPage';
 import ClientRoutes from './routes/ClientRoutes';
 
 function App() {
@@ -52,6 +54,18 @@ function App() {
               <Route path="/billing" element={
                 <ProtectedRoute>
                   <AppShell><BillingPortal /></AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/workflows" element={
+                <ProtectedRoute>
+                  <AppShell><WorkflowPage /></AppShell>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/tasks/:taskId" element={
+                <ProtectedRoute>
+                  <AppShell><TaskDetailPage /></AppShell>
                 </ProtectedRoute>
               } />
 

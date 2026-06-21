@@ -13,7 +13,7 @@ const xeroRoutes = require('./xeroRoutes');
 
 const AuthController = require('../controllers/AuthController');
 const OnboardingController = require('../controllers/OnboardingController');
-const ProposalController = require('../controllers/ProposalController');
+const BillingController = require('../controllers/BillingController');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 router.get('/health', (req, res) => {
@@ -51,20 +51,9 @@ router.use('/xero', xeroRoutes);
 router.post('/onboarding/clients', requireAuth, OnboardingController.autoSaveProgress);
 router.put('/onboarding/:clientId', requireAuth, OnboardingController.autoSaveProgress);
 
-// Billing (Integration with StripeService via BillingController)
-router.get('/billing/status', requireAuth, (req, res) => {
-  // TODO: Implement BillingController.getStatus
-  res.status(501).json({ error: 'Billing status service not yet implemented.' });
-});
-
-router.post('/billing/checkout', requireAuth, (req, res) => {
-  // TODO: Implement BillingController.createCheckout
-  res.status(501).json({ error: 'Checkout service not yet implemented.' });
-});
-
-router.post('/billing/portal', requireAuth, (req, res) => {
-  // TODO: Implement BillingController.openPortal
-  res.status(501).json({ error: 'Billing portal service not yet implemented.' });
-});
+// Billing
+router.get('/billing/status', requireAuth, BillingController.getStatus);
+router.post('/billing/checkout', requireAuth, BillingController.createCheckout);
+router.post('/billing/portal', requireAuth, BillingController.openPortal);
 
 module.exports = router;

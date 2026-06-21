@@ -5,6 +5,7 @@ const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 // Admin and Staff routes for task management
 router.post('/', requireAuth, requireRole(['admin', 'staff']), TaskController.createTask);
+router.get('/my', requireAuth, requireRole(['admin', 'staff']), TaskController.getMyTasks);
 router.get('/workflow/:workflowId', requireAuth, requireRole(['admin', 'staff']), TaskController.getTasksByWorkflow);
 router.get('/:id', requireAuth, requireRole(['admin', 'staff']), TaskController.getTaskById);
 router.put('/:id', requireAuth, requireRole(['admin', 'staff']), TaskController.updateTask);

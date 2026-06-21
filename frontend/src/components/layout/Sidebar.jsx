@@ -47,6 +47,9 @@ export const Sidebar = () => {
           <NavLink to="/onboarding" style={getLinkStyle}>
             🚀 Client Onboarding
           </NavLink>
+          <NavLink to="/workflows" style={getLinkStyle}>
+            ✅ Workflows
+          </NavLink>
           
           {/* Conditional Admin Tab */}
           {isAdmin && (

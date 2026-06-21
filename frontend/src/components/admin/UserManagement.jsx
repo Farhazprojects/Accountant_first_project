@@ -8,6 +8,15 @@ export const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'staff',
+  });
+  const [inviteMessage, setInviteMessage] = useState('');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -45,6 +54,24 @@ export const UserManagement = () => {
     }
   };
 
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    setInviteMessage('');
+    setInviteLoading(true);
+    try {
+      const response = await axiosClient.post('/users/invite', inviteForm);
+      setInviteMessage(response.data.data?.message || 'Invitation sent successfully.');
+      setShowInviteForm(false);
+      setInviteForm({ firstName: '', lastName: '', email: '', role: 'staff' });
+      const usersResponse = await axiosClient.get('/users');
+      setUsers(usersResponse.data.data || []);
+    } catch (err) {
+      setInviteMessage(err.response?.data?.error || 'Failed to send invitation.');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="af-dashboard">
@@ -60,10 +87,63 @@ export const UserManagement = () => {
           <h1 style={{ margin: '0 0 8px 0' }}>Staff Management</h1>
           <p className="af-muted" style={{ margin: 0 }}>Manage system access and roles.</p>
         </div>
-        <button className="af-btn af-btn-primary hover-lift">
+        <button
+          className="af-btn af-btn-primary hover-lift"
+          onClick={() => setShowInviteForm((prev) => !prev)}
+        >
           + Invite Staff
         </button>
       </div>
+
+      {inviteMessage && (
+        <div className="af-card mb-24">
+          <p style={{ margin: 0 }}>{inviteMessage}</p>
+        </div>
+      )}
+
+      {showInviteForm && (
+        <FadeIn className="af-card mb-24">
+          <form onSubmit={handleInvite}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <input
+                className="af-input"
+                placeholder="First Name"
+                value={inviteForm.firstName}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, firstName: e.target.value }))}
+                required
+              />
+              <input
+                className="af-input"
+                placeholder="Last Name"
+                value={inviteForm.lastName}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, lastName: e.target.value }))}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <input
+                className="af-input"
+                type="email"
+                placeholder="staff@example.com"
+                value={inviteForm.email}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, email: e.target.value }))}
+                required
+              />
+              <select
+                className="af-input"
+                value={inviteForm.role}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, role: e.target.value }))}
+              >
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button className="af-btn af-btn-primary" disabled={inviteLoading}>
+              {inviteLoading ? 'Sending Invite...' : 'Send Invite'}
+            </button>
+          </form>
+        </FadeIn>
+      )}
 
       <FadeIn className="af-card" style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

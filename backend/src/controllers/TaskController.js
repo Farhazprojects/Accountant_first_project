@@ -1,6 +1,20 @@
-const { Task } = require('../models');
+const { Task, Workflow } = require('../models');
 
 const TaskController = {
+  async getMyTasks(req, res, next) {
+    try {
+      const tasks = await Task.findAll({
+        where: { assigneeId: req.user.id },
+        include: [{ model: Workflow, as: 'workflow', attributes: ['id', 'name'] }],
+        order: [['dueDate', 'ASC'], ['createdAt', 'DESC']],
+      });
+      return res.status(200).json({ data: tasks });
+    } catch (error) {
+      console.error('[TaskController.getMyTasks Error]:', error.message);
+      next(error);
+    }
+  },
+
   // Get all tasks for a workflow, sorted by order
   async getTasksByWorkflow(req, res, next) {
     try {
