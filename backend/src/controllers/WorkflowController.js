@@ -1,6 +1,96 @@
 const { Workflow, Task } = require('../models');
 
 const WorkflowController = {
+  async createWorkflow(req, res, next) {
+    try {
+      const { name, recurrenceRule } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ error: 'Workflow name is required.' });
+      }
+
+      const workflow = await Workflow.create({
+        name,
+        recurrenceRule: recurrenceRule || 'none',
+      });
+
+      return res.status(201).json({ data: workflow });
+    } catch (error) {
+      console.error('[WorkflowController.createWorkflow Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async getAllWorkflows(req, res, next) {
+    try {
+      const workflows = await Workflow.findAll({
+        include: [{ model: Task, as: 'tasks' }],
+      });
+      return res.status(200).json({ data: workflows });
+    } catch (error) {
+      console.error('[WorkflowController.getAllWorkflows Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async getWorkflowById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const workflow = await Workflow.findByPk(id, {
+        include: [{ model: Task, as: 'tasks' }],
+      });
+
+      if (!workflow) {
+        return res.status(404).json({ error: 'Workflow not found.' });
+      }
+
+      return res.status(200).json({ data: workflow });
+    } catch (error) {
+      console.error('[WorkflowController.getWorkflowById Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async updateWorkflow(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { name, status, recurrenceRule } = req.body;
+
+      const workflow = await Workflow.findByPk(id);
+      if (!workflow) {
+        return res.status(404).json({ error: 'Workflow not found.' });
+      }
+
+      workflow.name = name || workflow.name;
+      workflow.status = status || workflow.status;
+      workflow.recurrenceRule = recurrenceRule || workflow.recurrenceRule;
+
+      await workflow.save();
+
+      return res.status(200).json({ data: workflow });
+    } catch (error) {
+      console.error('[WorkflowController.updateWorkflow Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async deleteWorkflow(req, res, next) {
+    try {
+      const { id } = req.params;
+      const workflow = await Workflow.findByPk(id);
+
+      if (!workflow) {
+        return res.status(404).json({ error: 'Workflow not found.' });
+      }
+
+      await workflow.destroy();
+      return res.status(204).send(); // No Content
+    } catch (error) {
+      console.error('[WorkflowController.deleteWorkflow Error]:', error.message);
+      next(error);
+    }
+  },
+
   // Update task status and auto-calculate workflow progress
   async updateTaskStatus(req, res, next) {
     try {

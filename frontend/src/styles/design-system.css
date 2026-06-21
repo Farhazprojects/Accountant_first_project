@@ -1,5 +1,5 @@
 :root {
-  /* Ignition-Pro Hybrid Colors */
+  /* Light Mode (Defaults) */
   --af-primary: #84cc16; /* Lime Green */
   --af-primary-hover: #65a30d;
   --af-secondary: #f1f5f9;
@@ -12,15 +12,26 @@
   --af-card-bg: #ffffff;
   --af-border: #e2e8f0;
   
-  /* Soft Shadows & Geometry */
   --af-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --af-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --af-radius: 12px;
 }
 
+[data-theme='dark'] {
+  --af-secondary: #1e293b;
+  --af-secondary-hover: #334155;
+  --af-text-main: #f8fafc;
+  --af-text-muted: #94a3b8;
+  --af-bg: #0f172a;
+  --af-card-bg: #1e293b;
+  --af-border: #334155;
+  --af-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
 body {
   background-color: var(--af-bg);
   color: var(--af-text-main);
+  transition: background-color 0.3s, color 0.3s;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -154,6 +165,15 @@ h1, h2, h3 {
   font-weight: 600;
   background: var(--af-secondary); 
   color: var(--af-text-main);
+}
+.af-status-pill-admin {
+  background: var(--af-primary);
+  color: #fff;
+}
+.af-status-pill-staff {
+  background: var(--af-secondary);
+  color: var(--af-text-muted);
+  border: 1px solid var(--af-border);
 }
 
 /* Animations */

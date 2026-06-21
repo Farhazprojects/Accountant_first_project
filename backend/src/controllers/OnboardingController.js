@@ -8,7 +8,7 @@ const OnboardingController = {
       const { name, email, phone, onboardingStep } = req.body;
 
       // If no clientId is provided, create a new draft client
-      if (clientId === 'new') {
+      if (clientId === 'new' || !clientId) {
         if (!name) {
           return res.status(400).json({ error: 'Client name is required to start onboarding.' });
         }

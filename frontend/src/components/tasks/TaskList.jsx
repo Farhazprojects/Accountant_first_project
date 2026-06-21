@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import TaskItem from './TaskItem';
+import TaskActivityPanel from './TaskActivityPanel';
+import { LoadingSkeleton, EmptyState } from '../ui/Skeletons';
 
-export const TaskList = ({ workflowId }) => {
+export const TaskList = ({ workflowId, onTaskUpdated }) => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [selectedTask, setSelectedTask] = useState(null);
+
   const dragItem = useRef();
   const dragOverItem = useRef();
 
-  // Fetch tasks on mount
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setIsLoading(true);
-        // Assuming API is running on localhost:5000 as configured in Step 3
-        const response = await axios.get(`http://localhost:5000/api/tasks/workflow/${workflowId}`);
-        setTasks(response.data.data);
+        const response = await axiosClient.get(`/tasks/workflow/${workflowId}`);
+        // Ensure we sort by order on the client side just in case
+        const sortedTasks = (response.data.data || []).sort((a, b) => a.order - b.order);
+        setTasks(sortedTasks);
       } catch (err) {
         console.error('Failed to fetch tasks:', err);
         setError('Failed to load tasks. Please try again.');
@@ -26,11 +29,15 @@ export const TaskList = ({ workflowId }) => {
       }
     };
 
-    fetchTasks();
+    if (workflowId) {
+      fetchTasks();
+    }
   }, [workflowId]);
 
   const handleDragStart = (e, position) => {
     dragItem.current = position;
+    // Add a ghost effect during drag
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragEnter = (e, position) => {
@@ -38,44 +45,70 @@ export const TaskList = ({ workflowId }) => {
   };
 
   const handleDragEnd = async () => {
-    if (dragItem.current === undefined || dragOverItem.current === undefined) return;
+    if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
+      return;
+    }
 
-    // Create a deep copy of the tasks array
     const newTasks = [...tasks];
-    
-    // Remove the dragged item and insert it at the new position
     const draggedItemContent = newTasks.splice(dragItem.current, 1)[0];
     newTasks.splice(dragOverItem.current, 0, draggedItemContent);
-    
-    // Update the 'order' property based on new array index
+
+    // Update orders
     const updatedTasks = newTasks.map((task, index) => ({
       ...task,
-      order: index
+      order: index,
     }));
 
-    // Optimistically update the UI
     setTasks(updatedTasks);
-    
+
     dragItem.current = null;
     dragOverItem.current = null;
 
-    // Persist new order to the backend
     try {
       const payload = updatedTasks.map(t => ({ id: t.id, order: t.order }));
-      await axios.put('http://localhost:5000/api/tasks/reorder', { tasks: payload });
+      await axiosClient.put('/tasks/reorder', { tasks: payload });
     } catch (err) {
       console.error('Failed to save new task order:', err);
-      // Optional: Revert state here if API call fails
       setError('Failed to save task order.');
     }
   };
 
-  if (isLoading) return <div className="af-muted fade-in">Loading tasks... (Skeleton incoming)</div>;
-  if (error) return <div className="af-status-pill af-btn-danger fade-in">{error}</div>;
-  if (tasks.length === 0) return <div className="af-card fade-in">No tasks found. Create one to get started.</div>;
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+  };
+
+  if (isLoading) return <LoadingSkeleton count={4} />;
+  
+  if (error) {
+    return (
+      <div className="af-card fade-in" style={{ borderColor: 'var(--af-danger)', backgroundColor: '#fff5f5' }}>
+        <p style={{ color: 'var(--af-danger)', margin: 0 }}>{error}</p>
+        <button className="af-btn af-btn-small af-btn-outline mt-12" onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (tasks.length === 0) return <EmptyState message="This workflow doesn't have any tasks yet." />;
 
   return (
-    <div className="af-dashboard">
+    <div className="af-dashboard fade-in">
+      {selectedTask && (
+        <TaskActivityPanel 
+          task={selectedTask} 
+          onClose={() => setSelectedTask(null)} 
+          onTaskUpdated={(updatedTask) => {
+            setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+            setSelectedTask(updatedTask);
+            if (onTaskUpdated) onTaskUpdated(updatedTask);
+          }}
+        />
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span className="af-muted" style={{ fontSize: '12px' }}>{tasks.length} TASKS TOTAL</span>
+        <span className="af-muted" style={{ fontSize: '12px' }}>DRAG TO REORDER</span>
+      </div>
+      
       {tasks.map((task, index) => (
         <TaskItem
           key={task.id}
@@ -84,6 +117,7 @@ export const TaskList = ({ workflowId }) => {
           onDragStart={handleDragStart}
           onDragEnter={handleDragEnter}
           onDragEnd={handleDragEnd}
+          onClick={handleTaskClick}
         />
       ))}
     </div>

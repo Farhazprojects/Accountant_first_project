@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import FadeIn from '../ui/FadeIn';
-import { useAuth } from '../../context/AuthContext.jsx'; // Targets your context file directly
+import { useAuth } from '../../context/AuthContext';
 
 export const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Grabs the global login hook
+  const location = useLocation();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
+    }
+  }, [user, navigate, location.state]);
 
   const handleChange = (e) => {
     setCredentials(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -21,32 +27,23 @@ export const Login = () => {
     setError(null);
 
     try {
-      // 1. Fire to your backend bypass login route
-      const response = await axios.post('http://localhost:5000/api/auth/login', credentials);
-      
-      // 2. Destructure the custom token and user shapes we built
-      const { token, user } = response.data;
-
-      // 3. CRITICAL: Run the global auth context function to tell React we are logged in
-      login(user, token);
-
-      // 4. Send the user to the dashboard
-      navigate('/dashboard');
+      await login(credentials.email, credentials.password);
+      navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to log in. Please check your network.');
+      setError(err.response?.data?.error || err.message || 'Failed to log in. Please check your network.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div 
-      className="af-page" 
-      style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        backgroundColor: 'var(--af-secondary)' 
+    <div
+      className="af-page"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'var(--af-secondary)',
       }}
     >
       <FadeIn className="af-card" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
@@ -56,15 +53,15 @@ export const Login = () => {
         </div>
 
         {error && (
-          <div 
-            className="mb-24" 
-            style={{ 
-              backgroundColor: '#fee2e2', 
-              color: 'var(--af-danger)', 
-              padding: '12px', 
+          <div
+            className="mb-24"
+            style={{
+              backgroundColor: '#fee2e2',
+              color: 'var(--af-danger)',
+              padding: '12px',
               borderRadius: '8px',
               fontSize: '14px',
-              textAlign: 'center'
+              textAlign: 'center',
             }}
           >
             {error}
@@ -100,9 +97,9 @@ export const Login = () => {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="af-btn af-btn-primary hover-lift" 
+          <button
+            type="submit"
+            className="af-btn af-btn-primary hover-lift"
             style={{ width: '100%', padding: '12px' }}
             disabled={isLoading}
           >

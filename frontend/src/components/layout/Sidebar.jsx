@@ -37,7 +37,7 @@ export const Sidebar = () => {
       <div style={{ padding: '24px 16px' }}>
         <div style={{ marginBottom: '32px', paddingLeft: '8px' }}>
           <h2 style={{ margin: 0, color: 'var(--af-text-main)', fontSize: '20px' }}>Accountant First</h2>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--af-primary)', trackingSpacing: '1px' }}>WORKSPACE</span>
+          <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--af-primary)', letterSpacing: '1px' }}>WORKSPACE</span>
         </div>
 
         <nav>
@@ -54,6 +54,9 @@ export const Sidebar = () => {
               ⚙️ Staff Management
             </NavLink>
           )}
+          <NavLink to="/billing" style={getLinkStyle}>
+            💳 Billing
+          </NavLink>
         </nav>
       </div>
 

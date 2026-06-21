@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../../src/app'); // Import your Express app entry
-const { User, Client, Proposal } = require('../../src/models');
+const { sequelize, User, Client, Proposal } = require('../../src/models');
 
 describe('🚀 Core Accounting SaaS Operational Pipeline', () => {
   let authToken;
@@ -9,6 +9,7 @@ describe('🚀 Core Accounting SaaS Operational Pipeline', () => {
 
   // Clean up database schemas and provision dummy admin prior to testing
   beforeAll(async () => {
+    await sequelize.sync({ force: true });
     await User.destroy({ where: {} });
     await Client.destroy({ where: {} });
     await Proposal.destroy({ where: {} });
@@ -16,7 +17,7 @@ describe('🚀 Core Accounting SaaS Operational Pipeline', () => {
     // Seed a standard administrator (passwordHash maps to default text: 'Password123')
     const admin = await User.create({
       email: 'qa@accountantfirst.com',
-      passwordHash: '$2b$10$7Z2P6f83t9bH4KqUe5Ube.pS4Wf7L0MOnWd76X3RkeZzY0hXF3.S6',
+      passwordHash: '$2b$10$pVumdj0avOljVET.QzuHhOm5KhPCANeUQO4ppS37G63i5lc7KbvXa',
       firstName: 'Quality',
       lastName: 'Assurance',
       role: 'admin',

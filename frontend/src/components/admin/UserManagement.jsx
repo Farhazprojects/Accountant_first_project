@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import { useAuth } from '../../context/AuthContext';
 import FadeIn from '../ui/FadeIn';
 
@@ -13,8 +13,7 @@ export const UserManagement = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        // Assuming an admin-protected route exists on the backend
-        const response = await axios.get('http://localhost:5000/api/admin/users');
+        const response = await axiosClient.get('/admin/users');
         setUsers(response.data.data);
       } catch (err) {
         console.error('Failed to fetch users:', err);
@@ -34,15 +33,13 @@ export const UserManagement = () => {
 
   const toggleRole = async (userId, currentRole) => {
     const newRole = currentRole === 'admin' ? 'staff' : 'admin';
-    
-    // Optimistic UI update
+
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
 
     try {
-      await axios.put(`http://localhost:5000/api/admin/users/${userId}/role`, { role: newRole });
+      await axiosClient.put(`/admin/users/${userId}/role`, { role: newRole });
     } catch (err) {
       console.error('Failed to update role:', err);
-      // Revert on failure
       setUsers(users.map(u => u.id === userId ? { ...u, role: currentRole } : u));
       alert('Failed to update user role.');
     }
@@ -51,7 +48,7 @@ export const UserManagement = () => {
   if (error) {
     return (
       <div className="af-dashboard">
-        <div className="af-status-pill af-btn-danger">{error}</div>
+        <div className="af-status-pill af-status-pill-staff">{error}</div>
       </div>
     );
   }
@@ -93,12 +90,12 @@ export const UserManagement = () => {
                     {user.email}
                   </td>
                   <td style={{ padding: '16px 24px' }}>
-                    <span className={`af-status-pill ${user.role === 'admin' ? 'af-btn-primary' : 'af-btn-outline'}`}>
+                    <span className={`af-status-pill ${user.role === 'admin' ? 'af-status-pill-admin' : 'af-status-pill-staff'}`}>
                       {user.role.toUpperCase()}
                     </span>
                   </td>
                   <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <button 
+                    <button
                       onClick={() => toggleRole(user.id, user.role)}
                       className="af-btn af-btn-small af-btn-secondary"
                     >

@@ -6,20 +6,26 @@ export const TaskItem = ({
   index, 
   onDragStart, 
   onDragEnter, 
-  onDragEnd 
+  onDragEnd,
+  onClick
 }) => {
-  // Determine status pill colors based on task status
-  const getStatusClass = (status) => {
+  // Use af-status-pill naming convention from design system
+  const getStatusStyle = (status) => {
     switch (status) {
-      case 'completed': return 'af-btn-primary'; // Borrowing lime green for completed
-      case 'in_progress': return 'af-btn-secondary';
-      default: return 'af-btn-outline';
+      case 'completed': 
+        return { backgroundColor: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' };
+      case 'in_progress': 
+        return { backgroundColor: '#dbeafe', color: '#1e40af', border: '1px solid #bfdbfe' };
+      default: 
+        return { backgroundColor: 'var(--af-secondary)', color: 'var(--af-text-muted)', border: '1px solid var(--af-border)' };
     }
   };
 
   const formattedDate = task.dueDate 
-    ? new Date(task.dueDate).toLocaleDateString() 
+    ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
     : 'No due date';
+
+  const statusLabel = task.status ? task.status.replace('_', ' ').toUpperCase() : 'PENDING';
 
   return (
     <FadeIn delay={index * 50}>
@@ -29,37 +35,75 @@ export const TaskItem = ({
         onDragEnter={(e) => onDragEnter(e, index)}
         onDragEnd={onDragEnd}
         onDragOver={(e) => e.preventDefault()}
+        onClick={() => onClick && onClick(task)}
         className="af-card hover-lift mb-24"
-        style={{ cursor: 'grab', padding: '16px 24px' }}
+        style={{ 
+          cursor: 'grab', 
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          transition: 'all 0.2s ease'
+        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{task.title}</h3>
-            {task.description && (
-              <p className="af-muted" style={{ margin: '0 0 12px 0', fontSize: '14px' }}>
-                {task.description}
-              </p>
-            )}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <span className={`af-status-pill ${getStatusClass(task.status)}`}>
-                {task.status.replace('_', ' ').toUpperCase()}
-              </span>
-              <span className="af-muted" style={{ fontSize: '12px' }}>
-                Due: {formattedDate}
-              </span>
-            </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>{task.title}</h3>
+            <span 
+              className="af-status-pill" 
+              style={{ ...getStatusStyle(task.status), fontSize: '10px', padding: '2px 8px' }}
+            >
+              {statusLabel}
+            </span>
           </div>
           
-          <div>
-            {/* Task Assignment Badge Placeholder */}
-            {task.assigneeId ? (
-              <div className="af-status-pill" style={{ backgroundColor: 'var(--af-primary)', color: '#fff' }}>
-                Assigned
+          {task.description && (
+            <p className="af-muted" style={{ margin: '0 0 12px 0', fontSize: '14px', lineHeight: '1.5' }}>
+              {task.description}
+            </p>
+          )}
+
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '12px' }}>📅</span>
+              <span className="af-muted" style={{ fontSize: '12px' }}>{formattedDate}</span>
+            </div>
+            {task.assignee && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div 
+                  style={{ 
+                    width: '20px', 
+                    height: '20px', 
+                    borderRadius: '50%', 
+                    backgroundColor: 'var(--af-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {task.assignee.firstName?.[0]}{task.assignee.lastName?.[0]}
+                </div>
+                <span className="af-muted" style={{ fontSize: '12px' }}>
+                  {task.assignee.firstName} {task.assignee.lastName}
+                </span>
               </div>
-            ) : (
-              <button className="af-btn af-btn-small af-btn-outline">Assign</button>
             )}
           </div>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {!task.assigneeId && (
+            <button 
+              className="af-btn af-btn-small af-btn-outline"
+              onClick={(e) => { e.stopPropagation(); /* assignment logic */ }}
+            >
+              Assign
+            </button>
+          )}
+          <div className="af-muted" style={{ fontSize: '20px', opacity: 0.3 }}>⋮</div>
         </div>
       </div>
     </FadeIn>

@@ -1,22 +1,38 @@
-const puppeteer = require('puppeteer');
+// Puppeteer is lazy-required inside functions to avoid loading it at module import time
+// (prevents ESM/CommonJS conflicts during startup)
 const { PDFDocument } = require('pdf-lib');
-const S3Service = require('./S3Service'); 
 
 const PdfService = {
   /**
    * Generates a PDF from an HTML string using Puppeteer
    */
   async generatePdfFromHtml(htmlContent) {
+    const puppeteer = require('puppeteer');
     let browser;
     try {
-      // Launch headless browser (configure args for production environments like Heroku/AWS)
+      let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      if (!executablePath) {
+        if (process.platform === 'darwin') {
+          executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        } else if (process.platform === 'linux') {
+          executablePath = '/usr/bin/chromium-browser';
+        }
+      }
+
+      // Launch headless browser with container-optimized settings
       browser = await puppeteer.launch({
         headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
       });
       
       const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      await page.setContent(htmlContent, { waitUntil: 'load' });
       
       // Generate PDF buffer
       const pdfBuffer = await page.pdf({

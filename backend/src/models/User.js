@@ -35,6 +35,11 @@ module.exports = (sequelize) => {
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    lastAssigned: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Timestamp of when the user was last assigned a task, for load balancing auto-assignment',
     }
   }, {
     tableName: 'users',

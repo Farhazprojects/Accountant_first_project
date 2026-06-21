@@ -1,6 +1,22 @@
 # Use the official, lightweight Node.js image
 FROM node:18-alpine
 
+# Install system dependencies for Puppeteer and build tools for native modules (like bcrypt)
+RUN apk add --no-cache \
+      chromium \
+      nss \
+      freetype \
+      harfbuzz \
+      ca-certificates \
+      ttf-freefont \
+      python3 \
+      make \
+      g++
+
+# Tell Puppeteer to use the installed Chromium instead of downloading its own
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 

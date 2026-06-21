@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import axiosClient from '../../api/axiosClient';
 import FadeIn from '../ui/FadeIn';
 
 export const OnboardingWizard = () => {
@@ -33,7 +33,7 @@ export const OnboardingWizard = () => {
 
     autoSaveTimer.current = setTimeout(async () => {
       try {
-        const response = await axios.put(`http://localhost:5000/api/onboarding/${clientId}`, {
+        const response = await axiosClient.put(`/onboarding/${clientId}`, {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,

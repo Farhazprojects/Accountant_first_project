@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await axiosClient.get('/auth/me');
-          setUser(response.data.user);
+          setUser(response.data.user ?? response.data.data?.user);
         } catch (error) {
           localStorage.removeItem('token');
         }
@@ -25,8 +25,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await axiosClient.post('/auth/login', { email, password });
-    localStorage.setItem('token', response.data.token);
-    setUser(response.data.user);
+    const token = response.data.token ?? response.data.data?.token;
+    const userData = response.data.user ?? response.data.data?.user;
+
+    if (!token || !userData) {
+      throw new Error('Login response missing token or user.');
+    }
+
+    localStorage.setItem('token', token);
+    setUser(userData);
     return response.data;
   };
 
@@ -35,14 +42,23 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const isAdmin = user?.role === 'admin' || user?.isAdmin === true;
+
+  if (loading) {
+    return (
+      <div className="af-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p className="af-muted">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin }}>
+      {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
 
-// Fixes the React compiler default export crash
 export default AuthProvider;

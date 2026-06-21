@@ -56,6 +56,85 @@ const TaskController = {
   },
 
   // Update task ordering (Required for Drag & Drop persistence)
+  async getTaskById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const task = await Task.findByPk(id);
+
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found.' });
+      }
+
+      return res.status(200).json({ data: task });
+    } catch (error) {
+      console.error('[TaskController.getTaskById Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async updateTask(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { title, description, status, dueDate, assigneeId } = req.body;
+
+      const task = await Task.findByPk(id);
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found.' });
+      }
+
+      task.title = title || task.title;
+      task.description = description || task.description;
+      task.status = status || task.status;
+      task.dueDate = dueDate || task.dueDate;
+      task.assigneeId = assigneeId || task.assigneeId;
+
+      await task.save();
+
+      return res.status(200).json({ data: task });
+    } catch (error) {
+      console.error('[TaskController.updateTask Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async deleteTask(req, res, next) {
+    try {
+      const { id } = req.params;
+      const task = await Task.findByPk(id);
+
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found.' });
+      }
+
+      await task.destroy();
+      return res.status(204).send(); // No Content
+    } catch (error) {
+      console.error('[TaskController.deleteTask Error]:', error.message);
+      next(error);
+    }
+  },
+
+  async assignTask(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { assigneeId } = req.body;
+
+      const task = await Task.findByPk(id);
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found.' });
+      }
+
+      task.assigneeId = assigneeId;
+      await task.save();
+
+      return res.status(200).json({ data: task });
+    } catch (error) {
+      console.error('[TaskController.assignTask Error]:', error.message);
+      next(error);
+    }
+  },
+
+  // Update task ordering (Required for Drag & Drop persistence)
   async updateTaskOrder(req, res, next) {
     try {
       const { tasks } = req.body; 

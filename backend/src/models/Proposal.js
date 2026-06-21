@@ -12,7 +12,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('draft', 'sent', 'viewed', 'accepted', 'declined'),
+      type: DataTypes.ENUM('draft', 'sent', 'viewed', 'accepted', 'declined', 'pending'),
       defaultValue: 'draft',
     },
     totalAmount: {

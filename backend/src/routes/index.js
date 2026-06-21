@@ -1,70 +1,70 @@
-const jwt = require('jsonwebtoken');
 const express = require('express');
 const router = express.Router();
+const taskRoutes = require('./taskRoutes');
+const userRoutes = require('./userRoutes');
+const clientRoutes = require('./clientRoutes');
+const proposalRoutes = require('./proposalRoutes');
+const proposalActivityLogRoutes = require('./proposalActivityLogRoutes');
+const workflowRoutes = require('./workflowRoutes');
+const workflowTemplateRoutes = require('./workflowTemplateRoutes');
+const taskActivityLogRoutes = require('./taskActivityLogRoutes');
+const documentRoutes = require('./documentRoutes');
+const xeroRoutes = require('./xeroRoutes');
 
-// Baseline health check route
+const AuthController = require('../controllers/AuthController');
+const OnboardingController = require('../controllers/OnboardingController');
+const ProposalController = require('../controllers/ProposalController');
+const { requireAuth, requireRole } = require('../middleware/authMiddleware');
+
 router.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'API routes are connected and responding.' });
 });
 
-// Guaranteed Entry Omni-Compatible Auth Route with REAL signed JWT
-router.post('/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  console.log(`🔑 Login router processing attempt for: ${email}`);
-
-  if (email === 'admin@accountantfirst.com') {
-    const mockUser = { 
-      id: 1, 
-      email: 'admin@accountantfirst.com', 
-      name: 'Admin Account',
-      role: 'admin',
-      isAdmin: true
-    };
-
-    // 🌟 Dynamically sign a real token so your AuthMiddleware passes validation
-    const realToken = jwt.sign(
-      { id: mockUser.id, email: mockUser.email, role: mockUser.role }, 
-      process.env.JWT_SECRET || 'fallback_super_secret_key', 
-      { expiresIn: '24h' }
-    );
-
-    // Returning BOTH flat and nested shapes simultaneously to prevent any frontend crash
-    return res.json({
-      // Shape A: Flat structure (matches: response.data.token)
-      token: realToken,
-      accessToken: realToken,
-      user: mockUser,
-      
-      // Shape B: Nested structure (matches: response.data.data.token)
-      data: {
-        token: realToken,
-        accessToken: realToken,
-        user: mockUser
-      },
-      
-      success: true
-    });
-  }
-
-  return res.status(401).json({ error: 'Invalid login email or password' });
+// Authentication
+router.post('/auth/login', AuthController.login);
+router.get('/auth/me', requireAuth, (req, res) => {
+  res.json({ 
+    data: { 
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        role: req.user.role,
+        isAdmin: req.user.role === 'admin'
+      } 
+    } 
+  });
 });
 
-// Omni-Compatible Profile Verification Endpoint
-router.get('/auth/me', (req, res) => {
-  console.log(`👤 Profile verification check intercept (/api/auth/me)`);
-  const profileData = { 
-    id: 1,
-    email: 'admin@accountantfirst.com', 
-    name: 'Admin Account',
-    role: 'admin',
-    isAdmin: true,
-    user: { id: 1, email: 'admin@accountantfirst.com', role: 'admin', isAdmin: true }
-  };
+// Primary Entities
+router.use('/users', userRoutes);
+router.use('/clients', clientRoutes);
+router.use('/proposals', proposalRoutes);
+router.use('/proposal-activity-logs', proposalActivityLogRoutes);
+router.use('/workflows', workflowRoutes);
+router.use('/workflow-templates', workflowTemplateRoutes);
+router.use('/tasks', taskRoutes);
+router.use('/task-activity-logs', taskActivityLogRoutes);
+router.use('/documents', documentRoutes);
+router.use('/xero', xeroRoutes);
 
-  res.json({
-    ...profileData,
-    data: profileData
-  });
+// Onboarding
+router.post('/onboarding/clients', requireAuth, OnboardingController.autoSaveProgress);
+router.put('/onboarding/:clientId', requireAuth, OnboardingController.autoSaveProgress);
+
+// Billing (Integration with StripeService via BillingController)
+router.get('/billing/status', requireAuth, (req, res) => {
+  // TODO: Implement BillingController.getStatus
+  res.status(501).json({ error: 'Billing status service not yet implemented.' });
+});
+
+router.post('/billing/checkout', requireAuth, (req, res) => {
+  // TODO: Implement BillingController.createCheckout
+  res.status(501).json({ error: 'Checkout service not yet implemented.' });
+});
+
+router.post('/billing/portal', requireAuth, (req, res) => {
+  // TODO: Implement BillingController.openPortal
+  res.status(501).json({ error: 'Billing portal service not yet implemented.' });
 });
 
 module.exports = router;

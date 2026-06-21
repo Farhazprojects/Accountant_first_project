@@ -1,10 +1,15 @@
 const sgMail = require('@sendgrid/mail');
 
-// Initialize with your SendGrid API key from environment variables
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@accountantfirst.com';
 const APP_URL = process.env.REACT_APP_URL || 'http://localhost:3000';
+
+// Only initialize SendGrid if a valid API key is provided
+const hasValidApiKey = process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.');
+if (hasValidApiKey) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+} else {
+  console.warn('[Email Service]: No valid SendGrid API key found. Emails will be logged to the console instead.');
+}
 
 const EmailService = {
   /**
@@ -19,8 +24,13 @@ const EmailService = {
     };
 
     try {
-      if (process.env.NODE_ENV === 'test') {
-        console.log(`[Mock Email Sent]: To: ${to} | Subject: ${subject}`);
+      if (!hasValidApiKey || process.env.NODE_ENV === 'test') {
+        console.log('--------------------------------------------------');
+        console.log(`[MOCK EMAIL SENT]`);
+        console.log(`To: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Content Preview: ${html.substring(0, 100)}...`);
+        console.log('--------------------------------------------------');
         return true;
       }
       
@@ -32,7 +42,6 @@ const EmailService = {
       if (error.response) {
         console.error(error.response.body);
       }
-      // Don't crash the server if an email fails, just return false
       return false;
     }
   },
