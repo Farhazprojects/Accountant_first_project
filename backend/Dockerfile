@@ -1,5 +1,5 @@
-# Use the official, lightweight Node.js image
-FROM node:18-alpine
+# Use current LTS-ready Node.js image
+FROM node:22-alpine
 
 # Install system dependencies for Puppeteer and build tools for native modules (like bcrypt)
 RUN apk add --no-cache \

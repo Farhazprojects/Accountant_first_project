@@ -19,3 +19,7 @@ yarn-error.log*
 # Operating System Files
 .DS_Store
 Thumbs.db
+
+# Build artifacts
+frontend/build/
+backend/uploads/

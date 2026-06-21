@@ -13,7 +13,7 @@ export const UserManagement = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await axiosClient.get('/admin/users');
+        const response = await axiosClient.get('/users');
         setUsers(response.data.data);
       } catch (err) {
         console.error('Failed to fetch users:', err);
@@ -34,13 +34,13 @@ export const UserManagement = () => {
   const toggleRole = async (userId, currentRole) => {
     const newRole = currentRole === 'admin' ? 'staff' : 'admin';
 
-    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    setUsers((prevUsers) => prevUsers.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
 
     try {
-      await axiosClient.put(`/admin/users/${userId}/role`, { role: newRole });
+      await axiosClient.put(`/users/${userId}`, { role: newRole });
     } catch (err) {
       console.error('Failed to update role:', err);
-      setUsers(users.map(u => u.id === userId ? { ...u, role: currentRole } : u));
+      setUsers((prevUsers) => prevUsers.map((u) => (u.id === userId ? { ...u, role: currentRole } : u)));
       alert('Failed to update user role.');
     }
   };

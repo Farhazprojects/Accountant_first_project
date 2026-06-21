@@ -24,13 +24,18 @@ const AuthController = {
       }
 
       // Generate JWT (Expires in 8 hours for standard workdays)
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        return res.status(500).json({ error: 'Server authentication is not configured.' });
+      }
+
       const token = jwt.sign(
         { 
           id: user.id, 
           role: user.role, 
           email: user.email 
         },
-        process.env.JWT_SECRET || 'fallback_super_secret_key',
+        jwtSecret,
         { expiresIn: '8h' }
       );
 
