@@ -1,15 +1,38 @@
-// Database schema definition for Accounting Firms
-const createFirmTableQuery = `
-  CREATE TABLE IF NOT EXISTS firms (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-`;
+const { DataTypes } = require('sequelize');
 
-module.exports = {
-  tableName: 'firms',
-  schemaQuery: createFirmTableQuery
+module.exports = (sequelize) => {
+  const Firm = sequelize.define('Firm', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    stripeCustomerId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    subscriptionStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'inactive',
+    },
+    stripePriceId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+  }, {
+    tableName: 'firms',
+    underscored: false,
+  });
+
+  return Firm;
 };

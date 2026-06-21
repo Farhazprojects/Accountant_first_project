@@ -23,6 +23,8 @@ const TaskTemplate = require('./TaskTemplate')(sequelize);
 const TaskActivityLog = require('./TaskActivityLog')(sequelize);
 const Document = require('./Document')(sequelize);
 const Notification = require('./Notification')(sequelize);
+const Firm = require('./Firm')(sequelize);
+const AuditLog = require('./AuditLog')(sequelize);
 
 // Associations
 Client.hasMany(Workflow, { foreignKey: 'clientId', as: 'workflows' });
@@ -86,4 +88,6 @@ module.exports = {
   TaskActivityLog,
   Document,
   Notification,
+  Firm,
+  AuditLog,
 };

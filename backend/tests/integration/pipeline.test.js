@@ -89,7 +89,7 @@ describe('🚀 Core Accounting SaaS Operational Pipeline', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body.data).toHaveProperty('documentUrl');
-    expect(response.body.data.documentUrl).toContain('mock-proposal.pdf');
+    expect(response.body.data.documentUrl).toMatch(/signed-proposal.*\.pdf/);
 
     // Confirm core records cleanly mutated states in local engine tables
     const freshProposal = await Proposal.findByPk(targetProposalId);
