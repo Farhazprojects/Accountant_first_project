@@ -1,13 +1,16 @@
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 
-// Configure AWS S3
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1'
+// Configure AWS S3 (v3)
+const awsRegion = process.env.AWS_REGION || 'us-east-1';
+const s3Client = new S3Client({
+  region: awsRegion,
+  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  } : undefined
 });
 
 const isAwsConfigured = process.env.AWS_ACCESS_KEY_ID && 
@@ -18,7 +21,7 @@ const isAwsConfigured = process.env.AWS_ACCESS_KEY_ID &&
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    fileSize: 10 * 1024 * 1024 // 10MB limit per file
   }
 });
 
@@ -34,18 +37,29 @@ const S3Service = {
       const fileKey = `clients/${clientId}/documents/${fileName}`;
 
       if (isAwsConfigured) {
-        console.log(`[S3 Service]: Uploading ${fileKey} to S3...`);
-        const params = {
-          Bucket: process.env.AWS_S3_BUCKET_NAME,
+        console.log(`[S3 Service]: Uploading ${fileKey} to S3 (v3)...`);
+        const bucket = process.env.AWS_S3_BUCKET_NAME;
+        const command = new PutObjectCommand({
+          Bucket: bucket,
           Key: fileKey,
           Body: file.buffer,
           ContentType: file.mimetype,
           ACL: 'private'
-        };
-        const result = await s3.upload(params).promise();
+        });
+
+        await s3Client.send(command);
+
+        // Construct a reasonable object URL (may vary by setup/config)
+        let url;
+        if (awsRegion === 'us-east-1') {
+          url = `https://${bucket}.s3.amazonaws.com/${encodeURIComponent(fileKey)}`;
+        } else {
+          url = `https://${bucket}.s3.${awsRegion}.amazonaws.com/${encodeURIComponent(fileKey)}`;
+        }
+
         return {
-          url: result.Location,
-          key: result.Key,
+          url,
+          key: fileKey,
           filename: file.originalname,
           mimetype: file.mimetype,
           size: file.size,
