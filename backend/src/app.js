@@ -24,6 +24,9 @@ const AutoAssignService = require('./services/AutoAssignService');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust the first proxy (nginx) so rate-limiter uses real client IPs via X-Forwarded-For
+app.set('trust proxy', 1);
+
 // Security: HTTP headers
 app.use(helmet());
 
